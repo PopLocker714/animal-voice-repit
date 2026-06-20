@@ -1,19 +1,26 @@
+# syntax=docker/dockerfile:1
 # --- Build stage: compile the static PWA with Bun + Vite ---
 FROM oven/bun:1-alpine AS build
 WORKDIR /app
+ENV BUN_INSTALL_CACHE_DIR=/root/.bun/install/cache
 
-# Install deps first (cached unless manifests change)
+# Install deps first (own layer). BuildKit cache mount keeps Bun's package
+# cache across builds, so installs are near-instant after the first one.
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
-# Build the app -> /app/dist (app shell + sounds + service worker)
+# Build the app -> /app/dist. vite only — type-checking is a dev/CI concern.
 COPY . .
-RUN bun run build
+RUN bun run build:docker
 
-# --- Serve stage: static files via nginx, no app server needed ---
-FROM nginx:alpine AS serve
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
+# --- Serve stage: Bun serves the static dist (no nginx, no node_modules) ---
+FROM oven/bun:1-alpine AS serve
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY server.ts ./
+ENV PORT=3000
+EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget -qO- http://localhost/ >/dev/null 2>&1 || exit 1
+  CMD wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1
+CMD ["bun", "server.ts"]

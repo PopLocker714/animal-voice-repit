@@ -1,0 +1,14 @@
+# Fast server deploy WITHOUT building inside the container.
+# Build the static site once on your machine / CI:  bun install && bun run build
+# Then on the server just serve the prebuilt ./dist — no Bun, no install, no wait.
+#   docker compose -f docker-compose.static.yml up -d
+services:
+  web:
+    image: nginx:alpine
+    container_name: animal-voce-app
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    restart: unless-stopped

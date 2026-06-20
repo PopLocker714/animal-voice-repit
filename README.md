@@ -56,19 +56,39 @@ bun run dev
 
 ## Деплой через Docker Compose
 
-Статическая сборка отдаётся через nginx — backend не нужен.
+Статика отдаётся через nginx — backend не нужен. Два варианта:
+
+### Вариант 1 — собрать в контейнере (self-contained)
 
 ```bash
-docker compose up -d --build      # собрать и запустить
-# открыть http://localhost:8080
+docker compose up -d --build      # собрать и запустить → http://localhost:8080
 docker compose down               # остановить
 ```
 
 - `Dockerfile` — multi-stage: Bun собирает `dist/`, nginx его отдаёт.
+- Установка зависимостей кешируется через BuildKit cache mount: первая сборка
+  ставит пакеты один раз (~1 мин), все последующие — за секунды.
+- В образе запускается только `vite build` (без `tsc`) — тайп-чек это задача
+  dev/CI, в сборку образа он не нужен.
+
+### Вариант 2 — без сборки в контейнере (быстрее всего на сервере)
+
+Собери `dist/` один раз у себя/в CI, на сервере nginx просто отдаёт готовое —
+никакого Bun и установки 272 пакетов на сервере.
+
+```bash
+bun install && bun run build                       # локально → dist/
+docker compose -f docker-compose.static.yml up -d  # на сервере, мгновенно
+```
+
+`docker-compose.static.yml` монтирует `./dist` и `./nginx.conf` в `nginx:alpine`.
+
+### Общее
+
 - `nginx.conf` — SPA-fallback, правильные MIME (`audio/mpeg`,
   `application/manifest+json`), `sw.js`/`index.html` без кеша (чтобы
   обновления доходили), хешированные ассеты — `immutable` на год.
-- Порт меняется в `docker-compose.yml` (`8080:80`).
+- Порт меняется в соответствующем compose-файле (`8080:80`).
 
 ### Микрофон и HTTPS
 
