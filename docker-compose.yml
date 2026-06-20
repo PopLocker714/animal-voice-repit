@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    image: animal-voce-app
+    container_name: animal-voce-app
+    ports:
+      - "8080:80"
+    restart: unless-stopped

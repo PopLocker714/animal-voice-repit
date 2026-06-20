@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/audio/dtw.ts","./src/audio/features.ts","./src/audio/record.ts","./src/audio/reference.ts","./src/audio/score.ts","./src/audio/synth.ts","./src/data/animals.ts","./src/screens/animalgrid.tsx","./src/screens/challenge.tsx","./vite.config.ts"],"version":"5.9.3"}
