@@ -1,6 +1,6 @@
 import { animalName, ANIMALS_BY_ID } from "../data/animals";
 import { AnimalIcon } from "../components/AnimalIcon";
-import { AudioButton } from "../components/AudioButton";
+import { PlayableRow } from "../components/PlayableRow";
 import { Confetti } from "../components/Confetti";
 import { Leaderboard } from "../components/Leaderboard";
 import { useLeaderboard } from "../realtime";
@@ -72,18 +72,14 @@ export function Results({ session, onRestart }: Props) {
       <ul className="result-list">
         {done.map((r, i) => {
           const a = ANIMALS_BY_ID[r.animalId];
-          const ap = audioProps(r.audio);
           return (
-            <li key={i} className="result-row">
-              <AnimalIcon animal={a} className="result-row__emoji" />
-              <span className="result-row__name">{animalName(a, lang)}</span>
-              <span className="result-row__pct">{r.percent}%</span>
-              {ap ? (
-                <AudioButton {...ap} label="▶︎" className="btn-mini" />
-              ) : (
-                <span className="btn-mini btn-mini--off">—</span>
-              )}
-            </li>
+            <PlayableRow
+              key={i}
+              icon={<AnimalIcon animal={a} className="result-row__emoji" />}
+              name={animalName(a, lang)}
+              percent={r.percent}
+              audio={audioProps(r.audio)}
+            />
           );
         })}
       </ul>

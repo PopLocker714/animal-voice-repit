@@ -11,6 +11,7 @@ import { useLeaderboard } from "../realtime";
 import { animalName, ANIMALS, ANIMALS_BY_ID } from "../data/animals";
 import { AnimalIcon } from "../components/AnimalIcon";
 import { AudioButton } from "../components/AudioButton";
+import { PlayableRow } from "../components/PlayableRow";
 import { Leaderboard } from "../components/Leaderboard";
 import { useI18n } from "../i18n";
 
@@ -66,16 +67,13 @@ export function Admin() {
           {detail.results.map((r) => {
             const a = ANIMALS_BY_ID[r.animalId];
             return (
-              <li key={r.id} className="result-row">
-                <AnimalIcon animal={a} className="result-row__emoji" />
-                <span className="result-row__name">{animalName(a, lang) || r.animalId}</span>
-                <span className="result-row__pct">{r.percent}%</span>
-                {r.audioUrl ? (
-                  <AudioButton url={r.audioUrl} label="▶︎" className="btn-mini" />
-                ) : (
-                  <span className="btn-mini btn-mini--off">—</span>
-                )}
-              </li>
+              <PlayableRow
+                key={r.id}
+                icon={<AnimalIcon animal={a} className="result-row__emoji" />}
+                name={animalName(a, lang) || r.animalId}
+                percent={r.percent}
+                audio={r.audioUrl ? { url: r.audioUrl } : null}
+              />
             );
           })}
           {detail.results.length === 0 && <li className="muted">{t("admin.no_results")}</li>}

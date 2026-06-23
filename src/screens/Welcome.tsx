@@ -7,13 +7,34 @@ import {
   type GameSession,
 } from "../game/session";
 import { useI18n } from "../i18n";
+import { useLeaderboard } from "../realtime";
 import { LangSelector } from "../components/LangSelector";
+import { Leaderboard } from "../components/Leaderboard";
 
 interface Props {
   onStart: (session: GameSession) => void;
 }
 
 type NameStatus = "idle" | "checking" | "free" | "taken";
+
+// Read-only view of the current game's leaderboard — no registration needed.
+function Standings({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n();
+  const rows = useLeaderboard();
+  return (
+    <div className="standings">
+      <button className="link" onClick={onBack}>
+        {t("admin.back")}
+      </button>
+      <h2>
+        {t("welcome.table_title")} <span className="live-dot" />
+      </h2>
+      {!rows && <p className="muted">{t("admin.connecting")}</p>}
+      {rows && rows.length === 0 && <p className="muted">{t("admin.no_players")}</p>}
+      {rows && rows.length > 0 && <Leaderboard rows={rows} />}
+    </div>
+  );
+}
 
 export function Welcome({ onStart }: Props) {
   const { t } = useI18n();
@@ -22,6 +43,7 @@ export function Welcome({ onStart }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<NameStatus>("idle");
+  const [showTable, setShowTable] = useState(false);
 
   const trimmed = name.trim();
 
@@ -73,6 +95,8 @@ export function Welcome({ onStart }: Props) {
     onStart(newSession({ id: Date.now(), name: trimmed }, "local"));
   }
 
+  if (showTable) return <Standings onBack={() => setShowTable(false)} />;
+
   return (
     <div className="welcome">
       <LangSelector />
@@ -105,6 +129,10 @@ export function Welcome({ onStart }: Props) {
       </button>
       <button className="btn btn--ghost" disabled={!trimmed || busy} onClick={startLocal}>
         {t("welcome.local")}
+      </button>
+
+      <button className="link link--center" onClick={() => setShowTable(true)}>
+        {t("welcome.view_table")}
       </button>
 
       <p className="hint">{t("welcome.hint")}</p>

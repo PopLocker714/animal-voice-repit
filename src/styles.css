@@ -363,11 +363,7 @@ body {
   color: var(--muted);
 }
 .lb__row {
-  cursor: pointer;
   border-top: 1px solid #f1f5f9;
-}
-.lb__row:active {
-  background: #faf5ff;
 }
 .lb__rank {
   font-weight: 700;
@@ -418,6 +414,9 @@ body {
 
 .lb__row--click {
   cursor: pointer;
+}
+.lb__row--click:active {
+  background: #faf5ff;
 }
 .lb__row--me {
   background: #f5f3ff;
@@ -607,4 +606,29 @@ body {
 }
 .input--bad {
   border-color: #dc2626;
+}
+
+/* Whole-row tap-to-play feedback */
+.result-row--click {
+  cursor: pointer;
+}
+.result-row--click:active {
+  transform: scale(0.99);
+  background: #faf5ff;
+}
+
+/* Standings panel (leaderboard view from the welcome screen) */
+.standings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.standings h2 {
+  margin: 0;
+  color: var(--accent-dark);
+}
+
+.link--center {
+  align-self: center;
+  font-weight: 600;
 }
