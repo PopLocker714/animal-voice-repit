@@ -58,4 +58,11 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    // Lighter build for slow / low-memory servers:
+    minify: "esbuild", // fast, low-memory minifier (no terser)
+    reportCompressedSize: false, // skip per-chunk gzip-size calc (notable CPU save)
+    sourcemap: false,
+    chunkSizeWarningLimit: 1500,
+  },
 });

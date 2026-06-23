@@ -1,0 +1,25 @@
+# Deploy WITHOUT building on the server (for slow / low-memory machines).
+# Build dist locally first:  bun install && bun run build
+# Then ship dist/ + server.ts + server/ to the host and run:
+#   docker compose -f docker-compose.prebuilt.yml up -d
+# Bun just serves the prebuilt files + API — no install, no vite build on the box.
+services:
+  web:
+    image: oven/bun:1-alpine
+    container_name: animal-voce-app
+    working_dir: /app
+    command: bun server.ts
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
+    volumes:
+      - ./dist:/app/dist:ro
+      - ./server.ts:/app/server.ts:ro
+      - ./server:/app/server:ro
+      - app-data:/app/data
+    ports:
+      - "8082:3000"
+    restart: unless-stopped
+
+volumes:
+  app-data:
