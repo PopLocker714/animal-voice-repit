@@ -41,5 +41,14 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // In dev, the API runs separately (bun server.ts). Proxy /api to it —
+    // ws:true so the realtime leaderboard socket (/api/ws) tunnels too.
+    // API_PORT lets dev pick a free port (default 3000).
+    proxy: {
+      "/api": {
+        target: `http://localhost:${(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.API_PORT ?? 3000}`,
+        ws: true,
+      },
+    },
   },
 });

@@ -21,7 +21,9 @@ export class MicRecorder {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
-        autoGainControl: true,
+        // Off: AGC would boost a near-silent room up to full scale, making
+        // "empty" recordings look like real signal to the scorer.
+        autoGainControl: false,
       },
     });
     this.chunks = [];
@@ -32,8 +34,11 @@ export class MicRecorder {
     this.recorder.start();
   }
 
-  /** Stop recording and return the captured audio as an AudioBuffer. */
-  async stop(): Promise<AudioBuffer> {
+  /**
+   * Stop recording. Returns both the decoded AudioBuffer (for scoring) and the
+   * raw Blob (for upload + later playback).
+   */
+  async stop(): Promise<{ buffer: AudioBuffer; blob: Blob }> {
     const recorder = this.recorder;
     if (!recorder) throw new Error("Recorder not started");
 
@@ -45,8 +50,8 @@ export class MicRecorder {
     const blob = await done;
     this.cleanup();
 
-    const arrayBuffer = await blob.arrayBuffer();
-    return decodeAudioFile(arrayBuffer);
+    const buffer = await decodeAudioFile(await blob.arrayBuffer());
+    return { buffer, blob };
   }
 
   cancel(): void {

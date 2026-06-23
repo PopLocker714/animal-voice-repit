@@ -6,3 +6,9 @@ services:
     ports:
       - "8082:3000"
     restart: unless-stopped
+    volumes:
+      # Persist the SQLite DB and recordings across redeploys.
+      - app-data:/app/data
+
+volumes:
+  app-data:

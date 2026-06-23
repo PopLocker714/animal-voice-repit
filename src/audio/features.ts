@@ -75,11 +75,26 @@ function trimSilence(signal: Float32Array, sr: number): Float32Array {
 function normalizePeak(signal: Float32Array): Float32Array {
   let peak = 0;
   for (let i = 0; i < signal.length; i++) peak = Math.max(peak, Math.abs(signal[i]));
-  if (peak < 1e-6) return signal;
+  // Don't amplify near-silence — that would blow faint room noise up to full
+  // scale and make an empty recording look like real signal.
+  if (peak < 0.02) return signal;
   const gain = 0.95 / peak;
   const out = new Float32Array(signal.length);
   for (let i = 0; i < signal.length; i++) out[i] = signal[i] * gain;
   return out;
+}
+
+/** Peak amplitude and RMS of a signal (used to detect silent recordings). */
+function levels(signal: Float32Array): { peak: number; rms: number } {
+  let peak = 0;
+  let sum = 0;
+  for (let i = 0; i < signal.length; i++) {
+    const v = signal[i];
+    const a = Math.abs(v);
+    if (a > peak) peak = a;
+    sum += v * v;
+  }
+  return { peak, rms: signal.length ? Math.sqrt(sum / signal.length) : 0 };
 }
 
 /** Slide a window over the signal and extract one MFCC vector per frame. */
@@ -104,6 +119,22 @@ export async function audioBufferToMfcc(buffer: AudioBuffer): Promise<MfccSequen
   const trimmed = trimSilence(resampled, TARGET_SR);
   const normalized = normalizePeak(trimmed);
   return computeMfcc(normalized);
+}
+
+export interface AttemptAnalysis {
+  mfcc: MfccSequence;
+  peak: number; // loudness of the actual (trimmed) content, pre-normalization
+  rms: number;
+}
+
+/** Like audioBufferToMfcc, but also reports loudness so callers can reject
+ *  silent recordings (peak/rms measured before normalization). */
+export async function audioBufferToAttempt(buffer: AudioBuffer): Promise<AttemptAnalysis> {
+  const resampled = await resampleToTarget(buffer);
+  const trimmed = trimSilence(resampled, TARGET_SR);
+  const { peak, rms } = levels(trimmed);
+  const normalized = normalizePeak(trimmed);
+  return { mfcc: computeMfcc(normalized), peak, rms };
 }
 
 /** Convenience: encoded file bytes -> MFCC sequence. */

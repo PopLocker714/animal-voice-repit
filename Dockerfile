@@ -14,12 +14,15 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY . .
 RUN bun run build:docker
 
-# --- Serve stage: Bun serves the static dist (no nginx, no node_modules) ---
+# --- Serve stage: Bun serves the API + static dist (no nginx, no node_modules) ---
 FROM oven/bun:1-alpine AS serve
 WORKDIR /app
 COPY --from=build /app/dist ./dist
 COPY server.ts ./
+COPY server ./server
 ENV PORT=3000
+ENV DATA_DIR=/app/data
+VOLUME /app/data
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1

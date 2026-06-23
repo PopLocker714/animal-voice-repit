@@ -41,15 +41,41 @@ function getRef(sound: string): Promise<RefData> {
   return entry;
 }
 
-/** Play the reference sound through the Web Audio output. */
+/**
+ * Play the reference sound. The returned promise resolves when playback
+ * finishes — callers can await it to block recording until the sound is done.
+ */
 export async function playReference(sound: string): Promise<void> {
   const { buffer } = await getRef(sound);
   const audioCtx = ctx();
-  if (audioCtx.state === "suspended") await audioCtx.resume();
+  if (audioCtx.state === "suspended") {
+    try {
+      await audioCtx.resume();
+    } catch {
+      /* ignore — start() below will still attempt playback */
+    }
+  }
   const src = audioCtx.createBufferSource();
   src.buffer = buffer;
   src.connect(audioCtx.destination);
-  src.start();
+  await new Promise<void>((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (!done) {
+        done = true;
+        resolve();
+      }
+    };
+    src.onended = finish;
+    try {
+      src.start();
+    } catch {
+      finish();
+      return;
+    }
+    // Safety net in case `onended` never fires (e.g. context issues).
+    setTimeout(finish, buffer.duration * 1000 + 400);
+  });
 }
 
 /** Get the reference MFCC sequence (cached) for scoring. */
