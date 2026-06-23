@@ -1,13 +1,19 @@
+# Dokploy (Compose type) — builds the image from the Dockerfile and runs the
+# Bun server (API + static dist + WebSocket) on port 3000.
+# Domain, HTTPS certificate and Traefik routing are added by Dokploy itself
+# (via its Domains UI) — no labels/networks needed here.
+#
+# For LOCAL runs use docker-compose.local.yml (publishes a host port):
+#   docker compose -f docker-compose.local.yml up -d --build
 services:
   web:
     build: .
-    image: animal-voce-app-2
-    container_name: animal-voce-app-2
-    ports:
-      - "8082:3000"
     restart: unless-stopped
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
     volumes:
-      # Persist the SQLite DB and recordings across redeploys.
+      # SQLite DB + voice recordings — survive redeploys.
       - app-data:/app/data
 
 volumes:

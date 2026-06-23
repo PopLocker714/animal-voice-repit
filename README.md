@@ -101,25 +101,31 @@ bun run dev          # фронт на :5173, проксирует /api -> :3000
 
 ## Деплой через Docker Compose
 
-Bun собирает фронт и сам раздаёт его + API (без nginx).
+Bun собирает фронт и сам раздаёт его + API (без nginx). Два compose-файла:
+
+- **`docker-compose.yml`** — для **Dokploy** (тип Compose): только `build: .`,
+  порт 3000 и том `app-data`. Домен, HTTPS-сертификат и Traefik-роутинг
+  добавляет сам Dokploy (через свой UI) — лейблов в файле нет.
+- **`docker-compose.local.yml`** — для локального запуска (публикует порт
+  `8082:3000`):
 
 ```bash
-docker compose up -d --build   # собрать и запустить → http://localhost:8082
-docker compose down            # остановить
+docker compose -f docker-compose.local.yml up -d --build   # → http://localhost:8082
+docker compose -f docker-compose.local.yml down
 ```
 
 - `Dockerfile` — multi-stage: Bun собирает `dist/`, финальный образ запускает
-  `bun server.ts` (API + статика). BuildKit cache mount ускоряет `bun install`
-  на повторных сборках; в образе только `vite build` (без `tsc`).
-- Контейнер слушает порт **3000**; compose пробрасывает `8082:3000`.
-- **Данные** (SQLite + записи голоса) лежат в `/app/data` и сохраняются в
-  именованном томе `app-data` — переживают пересборку/редеплой.
+  `bun server.ts` (API + статика). В образе только `vite build` (без `tsc`).
+- Контейнер слушает порт **3000**.
+- **Данные** (SQLite + записи) лежат в `/app/data`, том `app-data` — переживают редеплой.
 
-### Dokploy
+### Dokploy (тип Compose)
 
-Build Type → **Dockerfile**, Container Port → **3000**. Traefik сам выдаёт
-домен с HTTPS (нужен для микрофона). Для сохранности данных смонтируй
-постоянный том на `/app/data` в настройках сервиса.
+1. Тип приложения — **Compose**, источник — репозиторий, файл — `docker-compose.yml`.
+2. Домен добавь в Dokploy (Domains), сервис — `web`, порт — **3000**. Dokploy сам
+   пропишет роутинг и получит HTTPS-сертификат (нужен для микрофона).
+3. Том `app-data` хранит игроков и записи между деплоями.
+4. Жми **Deploy** — Dokploy соберёт образ из Dockerfile и поднимет Bun-сервер.
 
 ### Медленный / слабый сервер (сборка «висит»)
 
