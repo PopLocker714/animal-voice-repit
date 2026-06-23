@@ -10,6 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate", // new versions activate automatically
+      injectRegister: false, // we register manually in main.tsx for auto-reload
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "Повтори за животным",
@@ -35,6 +36,12 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,ico,mp3,woff2,webmanifest}"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
+        // The new SW takes control immediately instead of waiting for every tab
+        // to close — this is what fixes the "stale cache" problem.
+        clientsClaim: true,
+        skipWaiting: true,
+        // Never let the service worker handle the API (results, recordings, WS).
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],
