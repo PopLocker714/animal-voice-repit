@@ -632,3 +632,9 @@ body {
   align-self: center;
   font-weight: 600;
 }
+
+.lang-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}

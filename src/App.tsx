@@ -11,6 +11,7 @@ import { Game } from "./screens/Game";
 import { Results } from "./screens/Results";
 import { Admin } from "./screens/Admin";
 import { useI18n } from "./i18n";
+import { LangSelector } from "./components/LangSelector";
 
 const isAdmin = window.location.pathname.startsWith("/admin");
 
@@ -21,6 +22,9 @@ export function App() {
     return (
       <div className="app">
         <Header />
+        <div className="lang-bar">
+          <LangSelector />
+        </div>
         <Admin />
       </div>
     );
