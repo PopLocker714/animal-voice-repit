@@ -327,6 +327,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .admin__head h2 {
   margin: 0;
@@ -731,6 +733,10 @@ body {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
+}
+.admin__actions .btn-danger {
+  flex: 1 1 auto; /* always reachable, never clipped off-screen */
 }
 .btn-ghost-mini {
   border: 2px solid #ede9fe;

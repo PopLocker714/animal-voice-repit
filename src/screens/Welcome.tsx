@@ -22,7 +22,7 @@ function Standings({ onBack }: { onBack: () => void }) {
       </h2>
       {!rows && <p className="muted">{t("admin.connecting")}</p>}
       {rows && rows.length === 0 && <p className="muted">{t("admin.no_players")}</p>}
-      {rows && rows.length > 0 && <PlaysTable rows={rows} />}
+      {rows && rows.length > 0 && <PlaysTable rows={rows} showAudio />}
     </div>
   );
 }

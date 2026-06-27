@@ -9,12 +9,6 @@ interface Props {
   showAudio?: boolean; // admin can play back recordings
 }
 
-function fmtTime(ms: number): string {
-  const d = new Date(ms);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-
 /** Flat live results table: who played, which animal they got, their score. */
 export function PlaysTable({ rows, showAudio = false }: Props) {
   const { t, lang } = useI18n();
@@ -26,7 +20,6 @@ export function PlaysTable({ rows, showAudio = false }: Props) {
           <th>{t("table.name")}</th>
           <th>{t("table.animal")}</th>
           <th>{t("table.score")}</th>
-          <th>{t("table.time")}</th>
           {showAudio && <th></th>}
         </tr>
       </thead>
@@ -35,7 +28,7 @@ export function PlaysTable({ rows, showAudio = false }: Props) {
           const a = ANIMALS_BY_ID[r.animalId];
           return (
             <tr key={r.id} className="lb__row">
-              <td className="lb__rank">{rows.length - i}</td>
+              <td className="lb__rank">{i + 1}</td>
               <td>
                 <b>{r.name}</b>
               </td>
@@ -46,7 +39,6 @@ export function PlaysTable({ rows, showAudio = false }: Props) {
               <td>
                 <b className="table__pct">{r.percent}%</b>
               </td>
-              <td className="muted">{fmtTime(r.createdAt)}</td>
               {showAudio && (
                 <td>
                   {r.audioUrl ? (
