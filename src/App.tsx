@@ -1,22 +1,22 @@
 import { useState } from "react";
-import {
-  clearSession,
-  loadSession,
-  saveSession,
-  type GameSession,
-  type RoundResult,
-} from "./game/session";
+import { claimAnimal, loadBoard } from "./game/board";
 import { Welcome } from "./screens/Welcome";
-import { Game } from "./screens/Game";
-import { Results } from "./screens/Results";
+import { Board } from "./screens/Board";
+import { Play } from "./screens/Play";
 import { Admin } from "./screens/Admin";
+import { NameModal } from "./components/NameModal";
 import { useI18n } from "./i18n";
 import { LangSelector } from "./components/LangSelector";
 
 const isAdmin = window.location.pathname.startsWith("/admin");
 
+type Screen = "start" | "naming" | "board" | "play";
+
 export function App() {
-  const [session, setSession] = useState<GameSession | null>(() => loadSession());
+  const [screen, setScreen] = useState<Screen>("start");
+  const [playerName, setPlayerName] = useState("");
+  const [claimed, setClaimed] = useState<string[]>(loadBoard);
+  const [animalId, setAnimalId] = useState<string | null>(null);
 
   if (isAdmin) {
     return (
@@ -30,37 +30,47 @@ export function App() {
     );
   }
 
-  function start(s: GameSession) {
-    saveSession(s);
-    setSession(s);
+  // A child taps Play → name themselves → the board appears.
+  function confirmName(name: string) {
+    setPlayerName(name);
+    setClaimed(loadBoard()); // pick up cards claimed by previous children
+    setScreen("board");
   }
 
-  function advance(round: RoundResult) {
-    setSession((prev) => {
-      if (!prev) return prev;
-      const next: GameSession = {
-        ...prev,
-        index: prev.index + 1,
-        done: [...prev.done, round],
-      };
-      saveSession(next);
-      return next;
-    });
+  // They pick a blank card → reveal that animal and let them imitate it.
+  function pick(id: string) {
+    setAnimalId(id);
+    setScreen("play");
   }
 
-  function restart() {
-    clearSession();
-    setSession(null);
+  // Turn done: claim the card (auto-resets the board when full) and go home.
+  function finishTurn() {
+    if (animalId) setClaimed(claimAnimal(animalId));
+    setAnimalId(null);
+    setScreen("start");
   }
-
-  const finished = session && session.index >= session.order.length;
 
   return (
     <div className="app">
       <Header />
-      {!session && <Welcome onStart={start} />}
-      {session && !finished && <Game session={session} onAdvance={advance} />}
-      {session && finished && <Results session={session} onRestart={restart} />}
+
+      {(screen === "start" || screen === "naming") && (
+        <Welcome onPlay={() => setScreen("naming")} />
+      )}
+      {screen === "naming" && (
+        <NameModal onConfirm={confirmName} onCancel={() => setScreen("start")} />
+      )}
+      {screen === "board" && (
+        <Board
+          playerName={playerName}
+          claimed={claimed}
+          onPick={pick}
+          onExit={() => setScreen("start")}
+        />
+      )}
+      {screen === "play" && animalId && (
+        <Play playerName={playerName} animalId={animalId} onDone={finishTurn} />
+      )}
     </div>
   );
 }

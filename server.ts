@@ -1,7 +1,7 @@
 // Bun server: JSON/recording API + realtime leaderboard (WebSocket) + static
 // PWA (./dist), SPA fallback. No dependencies beyond the Bun runtime.
 import { handleApi } from "./server/api";
-import { leaderboardMessage, setPublisher, TOPIC } from "./server/realtime";
+import { playsMessage, setPublisher, TOPIC } from "./server/realtime";
 
 const DIST = new URL("./dist/", import.meta.url);
 const PORT = Number(Bun.env.PORT ?? 3000);
@@ -56,7 +56,7 @@ const server = Bun.serve({
   websocket: {
     open(ws) {
       ws.subscribe(TOPIC);
-      ws.send(leaderboardMessage()); // send current state immediately
+      ws.send(playsMessage()); // send current state immediately
     },
     message() {
       // clients are receive-only

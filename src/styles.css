@@ -638,3 +638,118 @@ body {
   justify-content: center;
   margin-bottom: 14px;
 }
+
+/* ===== Start screen big Play button ===== */
+.btn--big {
+  font-size: 1.5rem;
+  padding: 22px 24px;
+  margin-top: 8px;
+}
+
+/* ===== Name modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 41, 55, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+  animation: screenIn 0.18s ease both;
+}
+.modal {
+  background: #fff;
+  border-radius: 22px;
+  padding: 28px 22px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+}
+.modal h2 {
+  margin: 0;
+  color: var(--accent-dark);
+  text-align: center;
+}
+
+/* ===== Board ===== */
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.board__title {
+  margin: 4px 0 0;
+  color: var(--accent-dark);
+  text-align: center;
+}
+.board__left {
+  text-align: center;
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+}
+
+/* Colored blank card — a hidden animal waiting to be picked */
+.card--blank {
+  position: relative;
+  min-height: 96px;
+  justify-content: center;
+}
+.card__q {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: rgba(31, 41, 55, 0.35);
+}
+
+/* Already-claimed card — animal revealed, not selectable */
+.card--open {
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  box-shadow: none;
+  opacity: 0.85;
+  cursor: default;
+}
+.card--open:active {
+  transform: none;
+}
+
+/* ===== Plays table extras ===== */
+.table__emoji {
+  font-size: 1.3rem;
+  vertical-align: middle;
+}
+.table__pct {
+  color: var(--accent-dark);
+}
+
+/* ===== Admin head actions ===== */
+.admin__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.btn-ghost-mini {
+  border: 2px solid #ede9fe;
+  background: #fff;
+  color: var(--accent-dark);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.admin__stats {
+  display: flex;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.board {
+  animation: screenIn 0.32s ease both;
+}

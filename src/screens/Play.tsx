@@ -1,31 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { animalName, ANIMALS_BY_ID } from "../data/animals";
 import { AnimalIcon } from "../components/AnimalIcon";
+import { Confetti } from "../components/Confetti";
 import { useI18n } from "../i18n";
 import { MicRecorder } from "../audio/record";
 import { playReference } from "../audio/reference";
 import { scoreAttempt } from "../audio/scoreAttempt";
-import { submitResult } from "../api";
-import { saveRecording } from "../game/localStore";
-import type { AudioRef, GameSession, RoundResult } from "../game/session";
+import { submitPlay } from "../api";
 import type { ScoreResult } from "../audio/score";
 
 type Phase = "idle" | "recording" | "scoring" | "result";
 
 interface Props {
-  session: GameSession;
-  onAdvance: (round: RoundResult) => void;
+  playerName: string;
+  animalId: string;
+  // Called once the play has been recorded to the server (or best-effort failed).
+  onDone: () => void;
 }
 
 const micSupported = MicRecorder.isSupported();
-// Below this score we offer a retry instead of moving on (e.g. silence/glitch).
+// Below this score we offer a retry instead of recording it (e.g. silence/glitch).
 const RETRY_THRESHOLD = 10;
 
-export function Game({ session, onAdvance }: Props) {
+export function Play({ playerName, animalId, onDone }: Props) {
   const { t, lang } = useI18n();
-  const animalId = session.order[session.index];
   const animal = ANIMALS_BY_ID[animalId];
-  const total = session.order.length;
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [score, setScore] = useState<ScoreResult | null>(null);
@@ -43,15 +42,11 @@ export function Game({ session, onAdvance }: Props) {
       .finally(() => setSoundPlaying(false));
   }
 
-  // New animal: reset and play its sound.
+  // Reveal the animal and play its sound once on mount.
   useEffect(() => {
-    setPhase("idle");
-    setScore(null);
-    setError(null);
-    pendingBlob.current = null;
     playSound();
     return () => recorderRef.current?.cancel();
-  }, [animalId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function startRecording() {
     setError(null);
@@ -75,8 +70,6 @@ export function Game({ session, onAdvance }: Props) {
     if (!rec) return;
     setPhase("scoring");
     try {
-      // Score only here; the recording is saved later when the round is accepted
-      // (so a retry doesn't create duplicate results).
       const { buffer, blob } = await rec.stop();
       const scored = await scoreAttempt(animal.sound, buffer);
       pendingBlob.current = blob;
@@ -97,46 +90,27 @@ export function Game({ session, onAdvance }: Props) {
     playSound();
   }
 
-  // Accept the current attempt: save the recording, then advance.
+  // Accept the attempt: record it on the server, then hand back to the board.
   async function accept() {
     if (!score) return;
     setSaving(true);
-    let audio: AudioRef | null = null;
-    const blob = pendingBlob.current;
     try {
-      if (blob) {
-        if (session.mode === "online") {
-          const r = await submitResult({
-            userId: session.user.id,
-            animalId,
-            percent: score.percent,
-            blob,
-          });
-          audio = { kind: "server", id: r.id };
-        } else {
-          const key = await saveRecording(blob);
-          audio = { kind: "local", key };
-        }
-      }
+      await submitPlay({
+        name: playerName,
+        animalId,
+        percent: score.percent,
+        blob: pendingBlob.current,
+      });
     } catch {
-      // advance even if saving failed
+      // best-effort: still finish the turn even if saving failed
     }
     setSaving(false);
-    onAdvance({ animalId, percent: score.percent, audio });
+    onDone();
   }
 
   return (
     <div className="challenge">
-      <div className="progress">
-        {t("game.progress", {
-          n: session.index + 1,
-          total,
-          name: session.user.name,
-        })}
-      </div>
-      <div className="progress-bar">
-        <span style={{ width: `${(session.index / total) * 100}%` }} />
-      </div>
+      <div className="progress">{playerName}</div>
 
       <div key={animalId} className="challenge__hero" style={{ background: animal.color }}>
         <AnimalIcon animal={animal} className="challenge__emoji" />
@@ -149,7 +123,6 @@ export function Game({ session, onAdvance }: Props) {
 
       {phase === "idle" &&
         (soundPlaying ? (
-          // Block recording until the animal's sound has finished playing.
           <button className="btn btn--primary" disabled>
             {t("game.listening")}
           </button>
@@ -166,6 +139,7 @@ export function Game({ session, onAdvance }: Props) {
       {phase === "scoring" && <p className="status">{t("game.scoring")}</p>}
       {phase === "result" && score && (
         <div className="result">
+          {score.percent >= 75 && <Confetti />}
           <div className="result__percent">{score.percent}%</div>
           <div className="result__label">{t(score.verdict)}</div>
           {score.percent < RETRY_THRESHOLD ? (
@@ -180,11 +154,7 @@ export function Game({ session, onAdvance }: Props) {
             </>
           ) : (
             <button className="btn btn--primary" onClick={accept} disabled={saving}>
-              {saving
-                ? t("common.dots")
-                : session.index + 1 < total
-                  ? t("game.next")
-                  : t("game.finish")}
+              {saving ? t("common.dots") : t("game.done")}
             </button>
           )}
         </div>
