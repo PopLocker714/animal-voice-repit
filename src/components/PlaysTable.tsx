@@ -9,9 +9,17 @@ interface Props {
   showAudio?: boolean; // admin can play back recordings
 }
 
-/** Flat live results table: who played, which animal they got, their score. */
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+/**
+ * Ranked results table: highest score first, so row #1 is the leader. Ties go
+ * to whoever reached that score earlier. Top three get medals.
+ */
 export function PlaysTable({ rows, showAudio = false }: Props) {
   const { t, lang } = useI18n();
+  const ranked = [...rows].sort(
+    (a, b) => b.percent - a.percent || a.createdAt - b.createdAt
+  );
   return (
     <table className="lb">
       <thead>
@@ -24,11 +32,13 @@ export function PlaysTable({ rows, showAudio = false }: Props) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((r, i) => {
+        {ranked.map((r, i) => {
           const a = ANIMALS_BY_ID[r.animalId];
           return (
             <tr key={r.id} className="lb__row">
-              <td className="lb__rank">{i + 1}</td>
+              <td className={i < 3 ? "lb__rank lb__rank--top" : "lb__rank"}>
+                {MEDALS[i] ?? i + 1}
+              </td>
               <td>
                 <b>{r.name}</b>
               </td>
